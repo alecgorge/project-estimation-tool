@@ -53,7 +53,7 @@ function calculate_item(item) {
     };
 }
 
-function calculate_stage(prev_min, prev_max, stage) {
+function calculate_stage(stage) {
     let c_items = stage.items.map(calculate_item);
 
     let min = Math.max.apply(null, c_items.map(i => i.confidence_min_days));
@@ -70,8 +70,6 @@ function calculate_stage(prev_min, prev_max, stage) {
     return {
         confidence_min_days: min,
         confidence_max_days: max,
-        confidence_min_moment: prev_min.businessAdd(min),
-        confidence_max_moment: prev_max.businessAdd(max),
         max_cause: causes,
         items: c_items,
         title: stage.title,
@@ -80,24 +78,39 @@ function calculate_stage(prev_min, prev_max, stage) {
 
 function calculate_total(obj) {
     console.log('calculating total');
-    let start = moment(obj.start_date);
+
+    let c_stages = obj.stages.map(function (s) {
+        return calculate_stage(s);
+    });
+
+    var previousStagesMaxDays = c_stages
+        .slice(0, obj.start_date_stage_idx)
+        .map(function (s) { return s.confidence_max_days; })
+        .reduce(function (a, b) { return a + b; }, 0);
+
+    var start = moment(obj.start_date).businessAdd(-previousStagesMaxDays);
 
     let prev_min = start;
     let prev_max = start;
 
-    let c_stages = obj.stages.map(function (s) {
-        let stage = calculate_stage(prev_min, prev_max, s);
+    c_stages = c_stages.map(function (stage) {
+        let obj = Object.assign(stage, {
+            confidence_min_moment: prev_min.businessAdd(stage.confidence_min_days),
+            confidence_max_moment: prev_max.businessAdd(stage.confidence_max_days),
+        });
 
         prev_min = stage.confidence_min_moment;
         prev_max = stage.confidence_max_moment;
 
-        return stage;
+        return obj;
     });
 
     let min = c_stages.map(i => i.confidence_min_days).reduce((a, b) => a + b, 0);
     let max = c_stages.map(i => i.confidence_max_days).reduce((a, b) => a + b, 0);
 
     return {
+        start_date: start.format('YYYY-MM-DD'),
+        start_moment: start,
         confidence_min_days: min,
         confidence_max_days: max,
         confidence_min_moment: start.businessAdd(min),
@@ -128,6 +141,7 @@ Vue.filter('round', function (value, decimals) {
 
 let tmpl = {
     start_date: (new Date).toISOString().split('T')[0],
+    start_date_stage_idx: '0',
     stages: [
         template_stage('Speccing', [
             template_item('Product Spec'),
@@ -183,13 +197,13 @@ var app = new Vue({
         textareaDates: function () {
             return [
                 ["Start Date"].concat(this.calculated.stages.map(s => s.title)).join("\t"),
-                [this.template.start_date].concat(this.calculated.stages.map(s => s.confidence_max_moment.format('YYYY-MM-DD'))).join("\t"),
+                [this.calculated.start_date].concat(this.calculated.stages.map(s => s.confidence_max_moment.format('YYYY-MM-DD'))).join("\t"),
             ].join("\n");
         },
         textareaDays: function () {
             return [
                 ["Start Date"].concat(this.calculated.stages.map(s => s.title)).join("\t"),
-                [this.template.start_date].concat(this.calculated.stages.map(s => Math.round(s.confidence_max_days * 10, 1) / 10)).join("\t"),
+                [this.calculated.start_date].concat(this.calculated.stages.map(s => Math.round(s.confidence_max_days * 10, 1) / 10)).join("\t"),
             ].join("\n");
         },
         isMaxItem: function (stage_idx, item_idx) {
@@ -233,14 +247,17 @@ function persist_template(tmpl) {
 
     if (location.hash.substr(3) != encoded) {
         location.hash = "r=" + encoded;
-    }    
+    }
 }
 
 if (location.hash.indexOf("#r=") === 0) {
     try {
-        app.template = JSON.parse(atob(location.hash.substr(3)))
+        app.template = Object.assign(
+            { start_date_stage_idx: 0 },
+            JSON.parse(atob(location.hash.substr(3)))
+        );
     }
-    catch(e) {
+    catch (e) {
         // no worries, just clear out the invalid hash
         location.hash = ""
     }

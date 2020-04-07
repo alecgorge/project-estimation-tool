@@ -25,19 +25,39 @@
             </div>
         </div>
         <div class="row">
-            <div class="col">&nbsp;</div>
             <div class="col">
                 <form class="form-inline start-date">
                     <div class="form-group">
-                        <label for="start_date">Start Date</label>
-                        <input type="date" id="start_date" class="form-control mx-sm-3" :value="template.start_date"
-                            @input="template.start_date = $event.target.valueAsDate.toISOString().split('T')[0]">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Start Date</span>
+                            </div>
+                            <input type="date" id="start_date" class="form-control" :value="template.start_date"
+                                @input="template.start_date = $event.target.valueAsDate == null ? null : $event.target.valueAsDate.toISOString().split('T')[0]">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        &nbsp;
+                    </div>
+                    <div class="form-group">
+                        <select class="form-control" v-model="template.start_date_stage_idx">
+                            <option v-for="(stage, stage_idx) in template.stages" :key="stage.title" :value="stage_idx">
+                                Before {{ stage.title }}
+                            </option>
+                        </select>
                     </div>
                 </form>
             </div>
-            <div class="col">&nbsp;</div>
         </div>
         <form>
+            <div class="row stage">
+                <div class="col-4">
+                    <h3>Start Date</h3>
+                </div>
+                <div class="col">
+                    {{ calculated.start_moment.format('YYYY-MM-DD') }}
+                </div>
+            </div>
             <div class=" stage" v-for="(stage, stage_idx) in template.stages" :key="stage.title">
                 <div class="row">
                     <div class="col-4">
@@ -68,10 +88,10 @@
                         </div>
                         <div class="col-2">
                             <div class="input-group">
-                                <input type="number" class="form-control form-control-sm min-days" placeholder="0" min="1"
-                                v-model="item.min_days" v-on:change="enforceMinimum($event, item)" />
-                                <input type="number" class="form-control form-control-sm max-days" placeholder="0" min="1"
-                                v-model="item.max_days" v-on:change="enforceMaximum($event, item)" />
+                                <input type="number" class="form-control form-control-sm min-days" placeholder="0"
+                                    min="1" v-model="item.min_days" v-on:change="enforceMinimum($event, item)" />
+                                <input type="number" class="form-control form-control-sm max-days" placeholder="0"
+                                    min="1" v-model="item.max_days" v-on:change="enforceMaximum($event, item)" />
                             </div>
                         </div>
                         <div class="col">
