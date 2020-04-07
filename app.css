@@ -1,0 +1,68 @@
+body {
+    background: #efefef;
+}
+
+#root {
+    padding: 2rem;
+    margin: 2rem auto;
+    border: 1px #ddd solid;
+    background: white;
+}
+
+h1 {
+    color: #00245f;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.start-date {
+    margin-bottom: 2rem;
+}
+
+.start-date .col {
+    text-align: center;
+}
+
+.stage {
+    margin-bottom: 2rem;
+}
+
+.stage .explanation .title {
+    font-style: italic;
+}
+
+.stage .header {
+    text-transform: uppercase;
+    color: #aaa;
+    font-size: 0.9rem;
+    font-weight: normal;
+    text-align: center;
+}
+
+.stage:last-child {
+    margin-bottom: 0;
+}
+
+.stage h3 {
+    font-weight: bold;
+    color: #999;
+    font-size: 1.3rem;
+}
+
+.item {
+    margin-bottom: 0.5rem;
+}
+
+.item .explanation {
+    color: #555;
+    font-style: italic;
+    font-size: 0.8rem;
+    padding-top: 2px;
+}
+
+.item h4 {
+    font-weight: normal;
+    font-size: 1rem;
+    margin: 0;
+
+}

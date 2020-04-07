@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Estimation Tool</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="app.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+    <script src="https://unpkg.com/moment@2.24.0/min/moment.min.js"></script>
+    <script src="https://unpkg.com/moment-business-days@1.1.3/index.js"></script>
+    
+    <script defer src="app.js"></script>
+</head>
+
+<body>
+    <div id="root" class="container-md">
+        <div class="row">
+            <div class="col-12">
+                <h1>Project Estimation Tool</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">&nbsp;</div>
+            <div class="col">
+                <form class="form-inline start-date">
+                    <div class="form-group">
+                        <label for="start_date">Start Date</label>
+                        <input type="date" id="start_date" class="form-control mx-sm-3" :value="template.start_date"
+                            @input="template.start_date = $event.target.valueAsDate.toISOString().split('T')[0]">
+                    </div>
+                </form>
+            </div>
+            <div class="col">&nbsp;</div>
+        </div>
+        <form>
+            <div class=" stage" v-for="(stage, stage_idx) in template.stages" :key="stage.title">
+                <div class="row">
+                    <div class="col-4">
+                        <h3>{{ stage.title }}</h3>
+                    </div>
+                    <div class="col-2 header align-self-baseline">
+                        Min days
+                    </div>
+                    <div class="col-2 header align-self-baseline">
+                        Max days
+                    </div>
+                    <div class="col header align-self-baseline">
+                        Likelihood
+                    </div>
+                    <div class="col header align-self-baseline">
+                        Confidence
+                    </div>
+                </div>
+                <div class="item" v-for="(item, item_idx) in stage.items" :key="item.title">
+                    <div class="form-row">
+                        <div class="col-4 align-self-center">
+                            <h4>{{ item.title }}</h4>
+                            <small class="explanation">between
+                                {{ calculated.stages[stage_idx].items[item_idx].confidence_min_days | round(1) }}
+                                days
+                                and
+                                {{ calculated.stages[stage_idx].items[item_idx].confidence_max_days | round(1) }}
+                                days
+                                to complete.</small>
+                        </div>
+                        <div class="col-2">
+                            <input type="number" class="form-control form-control-sm" placeholder="0" min="1"
+                                v-model="item.min_days" v-on:change="enforceMinimum($event, item)" />
+                        </div>
+                        <div class="col-2">
+                            <input type="number" class="form-control form-control-sm" placeholder="0" min="1"
+                                v-model="item.max_days" v-on:change="enforceMaximum($event, item)" />
+                        </div>
+                        <div class="col">
+                            <select class="form-control form-control-sm" v-model="item.min_likelihood">
+                                <option v-for="likelihood in consts.min_likelihoods" :value="likelihood">
+                                    {{ likelihood * 100 | round }}% {{ item.min_days }} days,
+                                    {{ (1.0 - likelihood) * 100 | round }}% {{ item.max_days }} days
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <select class="form-control form-control-sm" v-model="item.confidence">
+                                <option v-for="conf in consts.confidences" :value="conf.value">
+                                    {{ conf.name }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row explanation">
+                    <div class="col-4 title">
+                        Stage Total
+                    </div>
+                    <div class="col">
+                        between {{ calculated.stages[stage_idx].confidence_min_days | round(1) }} days
+                        ({{ calculated.stages[stage_idx].confidence_min_moment.format('YYYY-MM-DD') }})
+                        and {{ calculated.stages[stage_idx].confidence_max_days | round(1) }} days
+                        ({{ calculated.stages[stage_idx].confidence_max_moment.format('YYYY-MM-DD') }})
+                        to complete
+                    </div>
+                </div>
+            </div>
+            <div class="row stage">
+                <div class="col-4">
+                    <h3>Total</h3>
+                </div>
+                <div class="col">
+                    between {{ calculated.confidence_min_moment.format('YYYY-MM-DD') }} and
+                    {{ calculated.confidence_max_moment.format('YYYY-MM-DD') }}
+                    <br />between {{ calculated.confidence_min_days | round(1) }} and
+                    {{ calculated.confidence_max_days | round(1) }} days
+                    <br />between {{ calculated.confidence_min_days / 5 | round(1) }} and
+                    {{ calculated.confidence_max_days / 5| round(1) }} weeks
+                    <br />between {{ calculated.confidence_min_days / 20.8 | round(1) }} and
+                    {{ calculated.confidence_max_days / 20.8 | round(1) }} months
+                </div>
+            </div>
+            <div class="row stage">
+                <div class="col">
+                    <textarea cols="90" rows="7" class="form-control" style="font-family: monospace;">{{ textareaDates() }}
+
+{{ textareaDays() }}</textarea>
+                    <br />
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
