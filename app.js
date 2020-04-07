@@ -188,13 +188,35 @@ var app = new Vue({
         },
         textareaDays: function () {
             return [
-                this.calculated.stages.map(s => s.title).join("\t"),
-                this.calculated.stages.map(s => Math.round(s.confidence_max_days * 10, 1) / 10).join("\t"),
+                ["Start Date"].concat(this.calculated.stages.map(s => s.title)).join("\t"),
+                [this.template.start_date].concat(this.calculated.stages.map(s => Math.round(s.confidence_max_days * 10, 1) / 10)).join("\t"),
             ].join("\n");
+        },
+        isMaxItem: function (stage_idx, item_idx) {
+            var stage = this.calculated.stages[stage_idx];
+
+            for (var i = 0; i < stage.items.length; i++) {
+                var item = stage.items[i];
+
+                if (stage.confidence_max_days == item.confidence_max_days && i == item_idx) {
+                    return true;
+                }
+            }
+
+            return false;
+        },
+        isAmbiguous: function (item) {
+            return item.confidence == '7.39';
         }
     },
     beforeUpdate: function () {
         this.calculated = calculate_total(this.template);
+
+        var template = this.template;
+        // no need to block a render
+        setTimeout(function () {
+            persist_template(template);
+        }, 0);
     },
     data: {
         consts: {
@@ -205,3 +227,24 @@ var app = new Vue({
         template: tmpl
     }
 });
+
+function persist_template(tmpl) {
+    var encoded = btoa(JSON.stringify(tmpl));
+
+    if (location.hash.substr(3) != encoded) {
+        location.hash = "r=" + encoded;
+    }    
+}
+
+if (location.hash.indexOf("#r=") === 0) {
+    try {
+        app.template = JSON.parse(atob(location.hash.substr(3)))
+    }
+    catch(e) {
+        // no worries, just clear out the invalid hash
+        location.hash = ""
+    }
+}
+else {
+    persist_template(app.template);
+}

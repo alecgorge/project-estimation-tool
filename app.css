@@ -53,6 +53,18 @@ h1 {
     margin-bottom: 0.5rem;
 }
 
+/* .item.max-item .max-days input {
+    background: #fff3cd;
+} */
+
+.item.max-item .explanation, .item.max-item h4 {
+    color: #856404;
+}
+
+.item.ambiguous .confidence select {
+    background: #f8d7da;
+}
+
 .item .explanation {
     color: #555;
     font-style: italic;
